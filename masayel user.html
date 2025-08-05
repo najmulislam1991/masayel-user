@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>মাসয়ালা মাসায়েল</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: #f9f9f9; color: #333; }
+        .container { max-width: 800px; margin: auto; background: #fff; padding: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.1); border-radius: 8px; }
+        h1 { text-align: center; color: #007bff; }
+        .search-container { text-align: center; margin-bottom: 20px; }
+        #search { width: 80%; padding: 12px; border: 1px solid #ccc; border-radius: 25px; font-size: 16px; }
+        .accordion { margin-top: 20px; }
+        .accordion-item { border-bottom: 1px solid #eee; }
+        .accordion-header { background: #f1f1f1; padding: 15px; cursor: pointer; font-weight: bold; font-size: 18px; border: none; width: 100%; text-align: left; }
+        .accordion-header:hover { background-color: #ddd; }
+        .accordion-content { padding: 0 18px; max-height: 0; overflow: hidden; transition: max-height 0.2s ease-out; background-color: white; }
+        .accordion-content p { padding: 15px 0; margin: 0; }
+        .active + .accordion-content { max-height: 500px; /* Adjust as needed */ }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>শরয়ী মাসয়ালা মাসায়েল</h1>
+        
+        <div class="search-container">
+            <input type="text" id="search" placeholder="প্রশ্ন খুঁজুন..." onkeyup="searchMasala()">
+        </div>
+        <div id="masala-accordion" class="accordion">
+            <p>লোড হচ্ছে...</p>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+    <script>
+        // আপনার Firebase প্রোজেক্টের কনফিগারেশন এখানে যোগ করুন
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            databaseURL: "YOUR_DATABASE_URL",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Firebase শুরু করুন
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const masalaRef = database.ref('masalas');
+
+        const accordionContainer = document.getElementById('masala-accordion');
+
+        // ডাটাবেস থেকে মাসয়ালা লোড করুন এবং দেখান
+        masalaRef.on('value', (snapshot) => {
+            accordionContainer.innerHTML = ''; // পুরনো তালিকা মুছে ফেলুন
+            if (!snapshot.exists()) {
+                accordionContainer.innerHTML = '<p>এখনো কোনো মাসয়ালা যোগ করা হয়নি।</p>';
+                return;
+            }
+
+            snapshot.forEach((childSnapshot) => {
+                const data = childSnapshot.val();
+
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'accordion-item';
+
+                const header = document.createElement('button');
+                header.className = 'accordion-header';
+                header.textContent = `প্রশ্ন: ${data.question}`;
+
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'accordion-content';
+                contentDiv.innerHTML = `<p><strong>উত্তর:</strong> ${data.answer}</p>`;
+
+                itemDiv.appendChild(header);
+                itemDiv.appendChild(contentDiv);
+                accordionContainer.appendChild(itemDiv);
+
+                header.addEventListener('click', function() {
+                    this.classList.toggle('active');
+                });
+            });
+        }, (error) => {
+            console.error("Data fetch failed: ", error);
+            accordionContainer.innerHTML = '<p>মাসয়ালা লোড করতে সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।</p>';
+        });
+
+        // সার্চ ফাংশন
+        function searchMasala() {
+            const filter = document.getElementById('search').value.toLowerCase();
+            const items = accordionContainer.getElementsByClassName('accordion-item');
+
+            for (let i = 0; i < items.length; i++) {
+                const header = items[i].getElementsByClassName('accordion-header')[0];
+                const text = header.textContent || header.innerText;
+                if (text.toLowerCase().indexOf(filter) > -1) {
+                    items[i].classList.remove('hidden');
+                } else {
+                    items[i].classList.add('hidden');
+                }
+            }
+        }
+    </script>
+
+</body>
+</html>S
